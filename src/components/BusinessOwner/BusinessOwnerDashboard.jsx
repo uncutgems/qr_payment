@@ -11,7 +11,7 @@ const BusinessOwnerDashboard = () => {
                     to="/business/create-payment"
                     className="block w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded text-center"
                 >
-                    Create New Payment Request
+                    Create Bill Request
                 </Link>
 
                 <div className="bg-gray-100 p-4 rounded-lg">

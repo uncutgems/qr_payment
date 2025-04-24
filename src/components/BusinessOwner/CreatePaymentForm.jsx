@@ -21,7 +21,11 @@ const CreatePaymentForm = () => {
 
         try {
             // For demo: Generate a simple random payment ID instead of calling real service
-            const demoPaymentId = 'PAY_' + Math.random().toString(36).substr(2, 9).toUpperCase();
+            const demoPaymentId = paymentService.requestPaymentId({
+                amount: parseFloat(amount),
+                email,
+                businessName
+            });
 
             // Store payment details in context
             createNewPayment({

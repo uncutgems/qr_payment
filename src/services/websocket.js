@@ -1,10 +1,10 @@
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
+import {Local_URL} from "./envConstant";
 
-const SOCKET_URL = 'http://localhost:8080/ws';
 
 export const connectToPaymentNotifications = (billId, onPaymentReceived) => {
-    const socket = new SockJS(SOCKET_URL);
+    const socket = new SockJS(`${Local_URL}/ws`);
     const stompClient = Stomp.over(socket);
 
     stompClient.connect({}, () => {

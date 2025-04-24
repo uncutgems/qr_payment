@@ -1,10 +1,12 @@
 // src/services/paymentService.js
+import {Local_URL} from "./envConstant";
+
 export const paymentService = {
     // Request a unique payment ID from the server
     requestPaymentId: async (amount, email, businessName) => {
         try {
             // In a real implementation, this would be an API call to your backend
-            const response = await fetch('https://api.yourpaymentservice.com/create-payment', {
+            const response = await fetch(`${Local_URL}/api/bills`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
