@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/qr_payment/static/css/main.e6c13ad2.css",
+    "main.js": "/qr_payment/static/js/main.ee319199.js",
+    "index.html": "/qr_payment/index.html",
+    "main.e6c13ad2.css.map": "/qr_payment/static/css/main.e6c13ad2.css.map",
+    "main.ee319199.js.map": "/qr_payment/static/js/main.ee319199.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.e6c13ad2.css",
+    "static/js/main.ee319199.js"
+  ]
+}
