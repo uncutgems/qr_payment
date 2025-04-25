@@ -29,7 +29,7 @@ const CreatePaymentForm = () => {
 
             // Store payment details in context
             createNewPayment({
-                paymentId: demoPaymentId,
+                paymentId: demoPaymentId.paymentId,
                 amount: parseFloat(amount),
                 email,
                 businessName,

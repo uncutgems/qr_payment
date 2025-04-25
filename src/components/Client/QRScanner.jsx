@@ -25,10 +25,9 @@ const QRScanner = () => {
                     videoRef.current.srcObject = stream;
                 }
 
-                // Start scanning for QR codes
                 scanInterval.current = setInterval(() => {
                     scanQRCode();
-                }, 500); // Scan every 500ms
+                }, 500);
 
             } catch (err) {
                 console.error('Error accessing camera:', err);
@@ -75,7 +74,7 @@ const QRScanner = () => {
 
         // Use jsQR to detect QR codes
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: "dontInvert",
+            inversionAttempts: "attemptBoth",
         });
 
         if (code) {

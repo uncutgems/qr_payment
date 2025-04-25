@@ -36,7 +36,7 @@ export const clientPaymentService = {
     // In clientPaymentService.js
     validateQRData: (qrData) => {
         try {
-            // Parse only if it's a string, otherwise use as is
+            console.log("Print QR Data:", qrData);
             const parsedData = typeof qrData === 'string'
                 ? JSON.parse(qrData)
                 : qrData;
