@@ -16,8 +16,7 @@ export const clientPaymentService = {
                     recipientName: paymentData.businessName,
                     customerName: customerInfo.name,
                     customerEmail: customerInfo.email,
-                    customerAccountNumber: customerInfo.accountNumber,
-                    timestamp: new Date().toISOString()
+                    accountNumber: customerInfo.accountNumber,
                 }),
             });
 
@@ -36,15 +35,29 @@ export const clientPaymentService = {
     // Validate QR code data
     validateQRData: (qrData) => {
         try {
-            // Parse QR data
-            const data = JSON.parse(qrData);
+            const parsedData = JSON.parse(qrData);
 
-            // Check required fields
-            if (!data.paymentId || !data.amount || !data.businessOwnerEmail || !data.businessName) {
+            // Validate required fields - using the field names from qrCodeService.js
+            if (!parsedData.transactionId ||
+                !parsedData.recipientName ||
+                !parsedData.recipientEmail ||
+                !parsedData.amount) {
                 throw new Error('Invalid QR code: missing required fields');
             }
 
-            return data;
+            // Optional validation for amount format
+            if (isNaN(parseFloat(parsedData.amount))) {
+                throw new Error('Invalid amount format in QR code');
+            }
+
+            // Return the validated data with consistent field names
+            return {
+                transactionId: parsedData.transactionId,
+                recipientName: parsedData.recipientName,
+                recipientEmail: parsedData.recipientEmail,
+                amount: parsedData.amount,
+                timestamp: parsedData.timestamp || new Date().toISOString()
+            };
         } catch (error) {
             console.error('QR validation error:', error);
             throw new Error('Invalid QR code format');

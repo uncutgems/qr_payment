@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clientPaymentService } from '../../services/clientPaymentService';
+import jsQR from 'jsqr';
 
 const QRScanner = () => {
     const [scanning, setScanning] = useState(true);
@@ -69,28 +70,17 @@ const QRScanner = () => {
         // Draw current video frame to canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // Here you would use a QR code library like jsQR to detect codes
-        // This is a simplified placeholder - in a real app, use a library like jsQR
-        try {
-            // Placeholder for QR code detection
-            // const code = jsQR(imageData.data, imageData.width, imageData.height);
+        // Get image data for QR code processing
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
 
-            // Simulate QR code detection (remove in real implementation)
-            // This simulates a successful scan for demo purposes
-            if (Math.random() < 0.05) { // 5% chance to "detect" a code on each frame
-                const simulatedQRData = JSON.stringify({
-                    paymentId: 'pay_' + Math.random().toString(36).substr(2, 9),
-                    amount: (Math.random() * 100).toFixed(2),
-                    businessOwnerEmail: 'business@example.com',
-                    businessName: 'Sample Business',
-                    timestamp: new Date().toISOString()
-                });
+        // Use jsQR to detect QR codes
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: "dontInvert",
+        });
 
-                handleQRCodeDetected(simulatedQRData);
-            }
-
-        } catch (err) {
-            console.error('QR scanning error:', err);
+        if (code) {
+            console.log("QR Code detected:", code.data);
+            handleQRCodeDetected(code.data);
         }
     };
 

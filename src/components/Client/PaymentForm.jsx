@@ -3,48 +3,33 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { clientPaymentService } from '../../services/clientPaymentService';
 
 const PaymentForm = () => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
+
+    // Initialize form data either from QR scan or empty values
     const [formData, setFormData] = useState({
+        transactionId: '',
         recipientName: '',
         recipientEmail: '',
         amount: '',
-        // Pre-filled customer demo data
-        customerName: 'Demo Customer',
-        customerEmail: 'customer@example.com',
-        customerAccountNumber: '123456789',
+        payerName: '',
+        payerEmail: ''
     });
 
-    const [paymentId, setPaymentId] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState('');
-
-    const navigate = useNavigate();
-    const location = useLocation();
-
-    // Check if payment data was passed from QR scanner
+    // Load data from QR code if available (passed through navigation state)
     useEffect(() => {
         if (location.state?.paymentData) {
             const { paymentData } = location.state;
-
-            // Auto-fill form with QR code data
             setFormData(prevData => ({
                 ...prevData,
-                recipientName: paymentData.businessName || '',
-                recipientEmail: paymentData.businessOwnerEmail || '',
-                amount: paymentData.amount ? paymentData.amount.toString() : '',
+                transactionId: paymentData.transactionId || '',
+                recipientName: paymentData.recipientName || '',
+                recipientEmail: paymentData.recipientEmail || '',
+                amount: paymentData.amount || ''
             }));
-
-            setPaymentId(paymentData.paymentId || '');
-        } else {
-            // If no QR data, fill with demo data for manual entry
-            setFormData(prevData => ({
-                ...prevData,
-                recipientName: 'Demo Business',
-                recipientEmail: 'business@example.com',
-                amount: '99.99',
-            }));
-
-            // Generate a demo payment ID
-            setPaymentId('MANUAL_' + Math.random().toString(36).substr(2, 9).toUpperCase());
         }
     }, [location.state]);
 
@@ -56,198 +41,208 @@ const PaymentForm = () => {
         }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
+    const processPayment = async () => {
+        setIsSubmitting(true);
         setError('');
 
         try {
-            // For demo: Simulate API call with a delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Prepare payment data
+            // Prepare payment data for clientPaymentService
             const paymentData = {
-                paymentId: paymentId || 'DEMO_' + Math.random().toString(36).substr(2, 9).toUpperCase(),
-                amount: parseFloat(formData.amount),
-                businessOwnerEmail: formData.recipientEmail,
-                businessName: formData.recipientName
+                transactionId: formData.transactionId,
+                amount: formData.amount,
+                recipientName: formData.recipientName,
+                recipientEmail: formData.recipientEmail,
+                payerName: formData.payerName,
+                payerEmail: formData.payerEmail
             };
 
-            // Prepare customer info (already pre-filled with demo data)
             const customerInfo = {
-                name: formData.customerName,
-                email: formData.customerEmail,
-                accountNumber: formData.customerAccountNumber
-            };
-
-            // Simulate sending payment to server
-            console.log('Processing payment:', { paymentData, customerInfo });
-
-            // Simulate SSE event to business owner (in real app, the server would do this)
-            // This is just for demonstration purposes to connect the two sides of the demo
-            if (window.demoSSECallback) {
-                window.demoSSECallback({
-                    status: 'completed',
-                    paymentId: paymentData.paymentId,
-                    amount: paymentData.amount,
-                    customerName: customerInfo.name,
-                    timestamp: new Date().toISOString()
-                });
+                customerName: "Demo Customer",
+                customerEmail: "customer@demo.com",
+                accountNumber: "1234567890",
             }
 
-            // Navigate to success page with payment result
-            navigate('/client/payment-success', {
-                state: {
-                    paymentResult: { success: true, transactionId: 'DEMO-TX-' + Date.now() },
-                    paymentDetails: {
-                        ...paymentData,
-                        customerName: customerInfo.name,
-                        timestamp: new Date().toISOString()
+            // Process payment using clientPaymentService
+            const result = await clientPaymentService.processPayment(paymentData, customerInfo);
+
+            // Handle successful payment
+            setSuccess(true);
+
+            // Redirect to success page after delay
+            setTimeout(() => {
+                navigate('/client/payment-success', {
+                    state: {
+                        paymentDetails: {
+                            ...paymentData,
+                            confirmationId: result?.confirmationId || result?.transactionId || formData.transactionId,
+                            timestamp: new Date().toISOString()
+                        }
                     }
-                }
-            });
+                });
+            }, 1500);
 
         } catch (err) {
-            setError(err.message || 'Payment processing failed');
+            setError(err.message || 'Failed to process payment. Please try again.');
         } finally {
-            setIsLoading(false);
+            setIsSubmitting(false);
         }
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        processPayment();
+    };
+
+    // Validate if the form is ready to submit
+    const isFormValid =
+        formData.transactionId &&
+        formData.recipientName &&
+        formData.recipientEmail &&
+        formData.amount &&
+        formData.payerName &&
+        formData.payerEmail;
+
     return (
         <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-            <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6" role="alert">
-                <p className="font-bold">Demo Mode</p>
-                <p>Customer information is pre-filled with demo data.</p>
-            </div>
-
-            {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                    {error}
+            {success ? (
+                <div className="text-center">
+                    <div className="bg-green-100 text-green-700 p-4 rounded-lg mb-4">
+                        <h3 className="font-bold text-lg">Payment Successful!</h3>
+                        <p>Your payment has been processed.</p>
+                        <p>Redirecting to confirmation page...</p>
+                    </div>
                 </div>
-            )}
+            ) : (
+                <>
+                    <h2 className="text-xl font-bold mb-6 text-center">Complete Your Payment</h2>
 
-            <form onSubmit={handleSubmit}>
-                <div className="mb-6 p-4 bg-gray-50 rounded-md">
-                    <h3 className="font-bold mb-2">Payment Details</h3>
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="recipientName">
-                            Business Name
-                        </label>
-                        <input
-                            type="text"
-                            id="recipientName"
-                            name="recipientName"
-                            className="w-full px-3 py-2 border rounded-md"
-                            value={formData.recipientName}
-                            onChange={handleChange}
-                            readOnly={!!location.state?.paymentData}
-                            placeholder="Business Name"
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="recipientEmail">
-                            Business Email
-                        </label>
-                        <input
-                            type="email"
-                            id="recipientEmail"
-                            name="recipientEmail"
-                            className="w-full px-3 py-2 border rounded-md"
-                            value={formData.recipientEmail}
-                            onChange={handleChange}
-                            readOnly={!!location.state?.paymentData}
-                            placeholder="business@example.com"
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="amount">
-                            Amount ($)
-                        </label>
-                        <input
-                            type="number"
-                            id="amount"
-                            name="amount"
-                            step="0.01"
-                            min="0.01"
-                            className="w-full px-3 py-2 border rounded-md"
-                            value={formData.amount}
-                            onChange={handleChange}
-                            readOnly={!!location.state?.paymentData}
-                            placeholder="0.00"
-                        />
-                    </div>
-
-                    {paymentId && (
-                        <div className="text-xs text-gray-500 mt-2">
-                            Payment ID: {paymentId}
+                    {error && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                            {error}
                         </div>
                     )}
+
+                    <form onSubmit={handleSubmit}>
+                        {/* Payment Details Section */}
+                        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                            <h3 className="font-semibold mb-3">Payment Information</h3>
+
+                            <div className="mb-4">
+                                <label className="block text-gray-700 text-sm font-bold mb-2">
+                                    Transaction ID
+                                </label>
+                                <input
+                                    type="text"
+                                    name="transactionId"
+                                    className="w-full px-3 py-2 border rounded-md bg-gray-100"
+                                    value={formData.transactionId}
+                                    readOnly
+                                />
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="block text-gray-700 text-sm font-bold mb-2">
+                                    Recipient
+                                </label>
+                                <input
+                                    type="text"
+                                    name="recipientName"
+                                    className="w-full px-3 py-2 border rounded-md bg-gray-100"
+                                    value={formData.recipientName}
+                                    readOnly
+                                />
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="block text-gray-700 text-sm font-bold mb-2">
+                                    Recipient Email
+                                </label>
+                                <input
+                                    type="email"
+                                    name="recipientEmail"
+                                    className="w-full px-3 py-2 border rounded-md bg-gray-100"
+                                    value={formData.recipientEmail}
+                                    readOnly
+                                />
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="block text-gray-700 text-sm font-bold mb-2">
+                                    Amount ($)
+                                </label>
+                                <input
+                                    type="text"
+                                    name="amount"
+                                    className="w-full px-3 py-2 border rounded-md bg-gray-100"
+                                    value={formData.amount}
+                                    readOnly
+                                />
+                            </div>
+                        </div>
+
+                        {/* Payer Information Section */}
+                        <div className="mb-6">
+                            <h3 className="font-semibold mb-3">Your Information</h3>
+
+                            <div className="mb-4">
+                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="payerName">
+                                    Your Name
+                                </label>
+                                <input
+                                    type="text"
+                                    id="payerName"
+                                    name="payerName"
+                                    className="w-full px-3 py-2 border rounded-md"
+                                    value={formData.payerName}
+                                    onChange={handleChange}
+                                    placeholder="Enter your full name"
+                                    required
+                                />
+                            </div>
+
+                            <div className="mb-4">
+                                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="payerEmail">
+                                    Your Email
+                                </label>
+                                <input
+                                    type="email"
+                                    id="payerEmail"
+                                    name="payerEmail"
+                                    className="w-full px-3 py-2 border rounded-md"
+                                    value={formData.payerEmail}
+                                    onChange={handleChange}
+                                    placeholder="your@email.com"
+                                    required
+                                />
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            className={`w-full font-bold py-2 px-4 rounded focus:outline-none ${
+                                isFormValid
+                                    ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`}
+                            disabled={!isFormValid || isSubmitting}
+                        >
+                            {isSubmitting ? 'Processing Payment...' : 'Pay Now'}
+                        </button>
+                    </form>
+                </>
+            )}
+
+            {/* Optional: Back to scanner button */}
+            {!success && (
+                <div className="mt-4 text-center">
+                    <button
+                        onClick={() => navigate('/client/scan')}
+                        className="text-blue-500 hover:text-blue-700"
+                    >
+                        Back to Scanner
+                    </button>
                 </div>
-
-                <div className="mb-6">
-                    <h3 className="font-bold mb-2">Your Information</h3>
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="customerName">
-                            Your Name
-                        </label>
-                        <input
-                            type="text"
-                            id="customerName"
-                            name="customerName"
-                            className="w-full px-3 py-2 border rounded-md"
-                            value={formData.customerName}
-                            onChange={handleChange}
-                            placeholder="Your Full Name"
-                            required
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="customerEmail">
-                            Your Email
-                        </label>
-                        <input
-                            type="email"
-                            id="customerEmail"
-                            name="customerEmail"
-                            className="w-full px-3 py-2 border rounded-md"
-                            value={formData.customerEmail}
-                            onChange={handleChange}
-                            placeholder="your@email.com"
-                            required
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="customerAccountNumber">
-                            Account Number
-                        </label>
-                        <input
-                            type="text"
-                            id="customerAccountNumber"
-                            name="customerAccountNumber"
-                            className="w-full px-3 py-2 border rounded-md"
-                            value={formData.customerAccountNumber}
-                            onChange={handleChange}
-                            placeholder="Your Account Number"
-                            required
-                        />
-                    </div>
-                </div>
-
-                <button
-                    type="submit"
-                    className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded focus:outline-none"
-                    disabled={isLoading}
-                >
-                    {isLoading ? 'Processing...' : 'Complete Payment'}
-                </button>
-            </form>
+            )}
         </div>
     );
 };
