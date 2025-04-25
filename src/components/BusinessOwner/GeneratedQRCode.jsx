@@ -22,8 +22,8 @@ const GeneratedQRCode = () => {
         const data = qrCodeService.generateQRCodeData(
             currentPayment.paymentId,
             currentPayment.amount,
-            currentPayment.email,
-            currentPayment.businessName
+            currentPayment.businessOwnerEmail,
+            currentPayment.businessOwnerName,
         );
         setQrCodeData(data);
 
@@ -98,8 +98,8 @@ const GeneratedQRCode = () => {
             <div className="mb-6 text-left">
                 <h3 className="font-bold mb-2">Payment Details:</h3>
                 <p><span className="font-semibold">Amount:</span> ${currentPayment.amount.toFixed(2)}</p>
-                <p><span className="font-semibold">Business:</span> {currentPayment.businessName}</p>
-                <p><span className="font-semibold">Email:</span> {currentPayment.email}</p>
+                <p><span className="font-semibold">Business:</span> {currentPayment.businessOwnerName}</p>
+                <p><span className="font-semibold">Email:</span> {currentPayment.businessOwnerEmail}</p>
                 <p><span className="font-semibold">Payment ID:</span> {currentPayment.paymentId}</p>
             </div>
 

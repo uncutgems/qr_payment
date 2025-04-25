@@ -46,9 +46,11 @@ export const clientPaymentService = {
 
             // Ensure fields are properly extracted as primitives
             return {
-                transactionId: String(parsedData.transactionId || ''),
+                paymentId: String(parsedData.transactionId || ''),
                 recipientName: String(parsedData.recipientName || ''),
                 recipientEmail: String(parsedData.recipientEmail || ''),
+                customerEmail: String('customer@demo.com'),
+                customerName: String('Demo Customer'),
                 amount: String(parsedData.amount || ''),
                 timestamp: parsedData.timestamp || new Date().toISOString()
             };

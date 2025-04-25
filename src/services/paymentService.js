@@ -14,7 +14,7 @@ export const paymentService = {
                 body: JSON.stringify({
                     amount,
                     businessOwnerEmail: email,
-                    businessName
+                    businessOwnerName: businessName
                 }),
             });
 

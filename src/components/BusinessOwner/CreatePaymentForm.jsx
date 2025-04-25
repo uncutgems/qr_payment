@@ -21,18 +21,19 @@ const CreatePaymentForm = () => {
 
         try {
             // For demo: Generate a simple random payment ID instead of calling real service
-            const demoPaymentId = paymentService.requestPaymentId(
+            const demoPaymentId = await paymentService.requestPaymentId(
                 amount,
                 email,
                 businessName
             );
+            console.log('Demo payment ID:', JSON.stringify(demoPaymentId));
 
             // Store payment details in context
             createNewPayment({
-                paymentId: demoPaymentId.paymentId,
+                paymentId: demoPaymentId,
                 amount: parseFloat(amount),
-                email,
-                businessName,
+                businessOwnerName: businessName,
+                businessOwnerEmail: email,
                 createdAt: new Date().toISOString()
             });
 
