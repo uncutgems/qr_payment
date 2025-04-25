@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { usePayment } from '../../context/PaymentContext';
 import { qrCodeService } from '../../services/qrCodeService';
 import { connectToPaymentNotifications } from '../../services/websocket';
-import QRCode from 'qrcode.react';
+import {QRCodeSVG} from 'qrcode.react';
+import {paymentService} from "../../services/paymentService";
 
 const GeneratedQRCode = () => {
     const { currentPayment, updatePaymentStatus } = usePayment();
@@ -31,7 +32,8 @@ const GeneratedQRCode = () => {
             currentPayment.paymentId,
             (paymentResponse) => {
                 console.log('Payment response received:', paymentResponse);
-                if (paymentResponse.status === 'success') {
+                if (paymentResponse.success === true) {
+                    console.log('Payment successful, navigating to success page');
                     updatePaymentStatus('success');
                     navigate('/business/payment-success');
                 }
@@ -51,7 +53,7 @@ const GeneratedQRCode = () => {
             if (!currentPayment) return;
 
             // For demo: Just show a brief loading state before navigating
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await paymentService.cancelPayment(currentPayment.paymentId);
 
             updatePaymentStatus('cancelled');
             navigate('/business/create-payment');
@@ -76,11 +78,10 @@ const GeneratedQRCode = () => {
             <div className="mb-4 p-4 bg-gray-100 rounded-lg">
                 <div className="flex justify-center mb-4">
                     {qrCodeData && (
-                        <QRCode
+                        <QRCodeSVG
                             value={qrCodeData}
                             size={200}
                             level="H"
-                            includeMargin={true}
                             renderAs="svg"
                         />
                     )}

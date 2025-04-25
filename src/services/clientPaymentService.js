@@ -1,8 +1,10 @@
+import {Azure_URL} from "./envConstant";
+
 export const clientPaymentService = {
     // Process a payment from QR code data
     processPayment: async (paymentData, customerInfo) => {
         try {
-            const response = await fetch('https://api.yourpaymentservice.com/process-payment', {
+            const response = await fetch(`${Azure_URL}/api/payments}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

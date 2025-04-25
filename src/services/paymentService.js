@@ -1,12 +1,12 @@
 // src/services/paymentService.js
-import {Local_URL} from "./envConstant";
+import {Azure_URL} from "./envConstant";
 
 export const paymentService = {
     // Request a unique payment ID from the server
     requestPaymentId: async (amount, email, businessName) => {
         try {
             // In a real implementation, this would be an API call to your backend
-            const response = await fetch(`${Local_URL}/api/bills`, {
+            const response = await fetch(`${Azure_URL}/api/bills`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -31,8 +31,8 @@ export const paymentService = {
     // Cancel a payment request
     cancelPayment: async (paymentId) => {
         try {
-            const response = await fetch(`https://api.yourpaymentservice.com/cancel-payment/${paymentId}`, {
-                method: 'POST',
+            const response = await fetch(`${Azure_URL}/api/bills/${paymentId}`, {
+                method: 'DELETE',
             });
 
             if (!response.ok) throw new Error('Failed to cancel payment');
@@ -47,7 +47,7 @@ export const paymentService = {
     // Check payment status (as fallback if SSE doesn't work)
     checkPaymentStatus: async (paymentId) => {
         try {
-            const response = await fetch(`https://api.yourpaymentservice.com/payment-status/${paymentId}`);
+            const response = await fetch(`${Azure_URL}/api/bills/${paymentId}`);
 
             if (!response.ok) throw new Error('Failed to check payment status');
 
@@ -61,7 +61,7 @@ export const paymentService = {
     // Create SSE connection for real-time payment updates
     subscribeToPaymentUpdates: (paymentId, onPaymentConfirmed, onPaymentCancelled, onError) => {
         try {
-            const eventSource = new EventSource(`https://api.yourpaymentservice.com/payment-events/${paymentId}`);
+            const eventSource = new EventSource(`${Azure_URL}/api/${paymentId}`);
 
             // Handle payment confirmation
             eventSource.addEventListener('payment_confirmed', (event) => {
