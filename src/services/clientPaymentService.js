@@ -33,33 +33,27 @@ export const clientPaymentService = {
     },
 
     // Validate QR code data
+    // In clientPaymentService.js
     validateQRData: (qrData) => {
         try {
-            const parsedData = JSON.parse(qrData);
+            // Parse only if it's a string, otherwise use as is
+            const parsedData = typeof qrData === 'string'
+                ? JSON.parse(qrData)
+                : qrData;
 
-            // Validate required fields - using the field names from qrCodeService.js
-            if (!parsedData.transactionId ||
-                !parsedData.recipientName ||
-                !parsedData.recipientEmail ||
-                !parsedData.amount) {
-                throw new Error('Invalid QR code: missing required fields');
-            }
+            // Log for debugging
+            console.log("Validating QR data:", parsedData);
 
-            // Optional validation for amount format
-            if (isNaN(parseFloat(parsedData.amount))) {
-                throw new Error('Invalid amount format in QR code');
-            }
-
-            // Return the validated data with consistent field names
+            // Ensure fields are properly extracted as primitives
             return {
-                transactionId: parsedData.transactionId,
-                recipientName: parsedData.recipientName,
-                recipientEmail: parsedData.recipientEmail,
-                amount: parsedData.amount,
+                transactionId: String(parsedData.transactionId || ''),
+                recipientName: String(parsedData.recipientName || ''),
+                recipientEmail: String(parsedData.recipientEmail || ''),
+                amount: String(parsedData.amount || ''),
                 timestamp: parsedData.timestamp || new Date().toISOString()
             };
         } catch (error) {
-            console.error('QR validation error:', error);
+            console.error("QR data validation error:", error);
             throw new Error('Invalid QR code format');
         }
     }

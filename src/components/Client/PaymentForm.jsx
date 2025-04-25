@@ -9,7 +9,7 @@ const PaymentForm = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
-    // Initialize form data either from QR scan or empty values
+    // Initialize form data with empty values
     const [formData, setFormData] = useState({
         transactionId: '',
         recipientName: '',
@@ -23,12 +23,19 @@ const PaymentForm = () => {
     useEffect(() => {
         if (location.state?.paymentData) {
             const { paymentData } = location.state;
+
+            // Debugging: Log the incoming payment data to inspect its structure
+            console.log("Received payment data:", paymentData);
+
+            // Safely extract values with proper type handling
             setFormData(prevData => ({
                 ...prevData,
-                transactionId: paymentData.transactionId || '',
-                recipientName: paymentData.recipientName || '',
-                recipientEmail: paymentData.recipientEmail || '',
-                amount: paymentData.amount || ''
+                transactionId: typeof paymentData.transactionId === 'object'
+                    ? JSON.stringify(paymentData.transactionId) // Convert object to string if needed
+                    : String(paymentData.transactionId || ''),  // Otherwise ensure it's a string
+                recipientName: String(paymentData.recipientName || ''),
+                recipientEmail: String(paymentData.recipientEmail || ''),
+                amount: String(paymentData.amount || '')
             }));
         }
     }, [location.state]);
@@ -46,6 +53,9 @@ const PaymentForm = () => {
         setError('');
 
         try {
+            // Log the data to be sent for payment processing
+            console.log("Processing payment with data:", formData);
+
             // Prepare payment data for clientPaymentService
             const paymentData = {
                 transactionId: formData.transactionId,
@@ -56,14 +66,8 @@ const PaymentForm = () => {
                 payerEmail: formData.payerEmail
             };
 
-            const customerInfo = {
-                customerName: "Demo Customer",
-                customerEmail: "customer@demo.com",
-                accountNumber: "1234567890",
-            }
-
             // Process payment using clientPaymentService
-            const result = await clientPaymentService.processPayment(paymentData, customerInfo);
+            const result = await clientPaymentService.processPayment(paymentData);
 
             // Handle successful payment
             setSuccess(true);
@@ -82,6 +86,7 @@ const PaymentForm = () => {
             }, 1500);
 
         } catch (err) {
+            console.error("Payment processing error:", err);
             setError(err.message || 'Failed to process payment. Please try again.');
         } finally {
             setIsSubmitting(false);
@@ -101,6 +106,7 @@ const PaymentForm = () => {
         formData.amount &&
         formData.payerName &&
         formData.payerEmail;
+
 
     return (
         <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
