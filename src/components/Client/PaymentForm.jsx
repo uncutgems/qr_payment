@@ -15,8 +15,8 @@ const PaymentForm = () => {
         recipientName: '',
         recipientEmail: '',
         amount: '',
-        payerName: '',
-        payerEmail: ''
+        payerName: 'Customer Demo',
+        payerEmail: 'customer@demo.com'
     });
 
     // Load data from QR code if available (passed through navigation state)
